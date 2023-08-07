@@ -7,12 +7,11 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:radiology/Pages/Case/case.dart';
-import 'package:radiology/Pages/Theme/theme_options.dart';
+import 'package:radiology/Pages/Theme/theme_options_page.dart';
 import './Pages/Settings/settings.dart';
 import 'Pages/Home/home.dart';
 import 'Pages/Settings/Componet/Provider/theme_provider.dart';
 import 'Pages/Settings/Componet/Provider/value.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'Pages/Theme/components/app_colors_themes.dart';
 
