@@ -1,11 +1,14 @@
 // ignore_for_file: non_constant_identifier_names, no_leading_underscores_for_local_identifiers, constant_identifier_names, must_be_immutable
 import 'dart:collection';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:material_segmented_control/material_segmented_control.dart';
 import 'package:provider/provider.dart';
+import 'package:radiology/Pages/Home/home.dart';
 import 'package:radiology/Pages/Settings/Componet/Provider/value.dart';
+import 'package:radiology/db/objbox.dart';
 import '../Case/models/mri_case.dart';
 import './models/window.dart';
 
@@ -18,12 +21,13 @@ extension StringExtension on String {
 }
 
 class Case extends HookWidget {
-  final int case_no;
+  final CaseStorage caseStorage;
   int dragYPosition = 0;
-  WindowType? current_window;
-  PlaneType? current_plane;
+  PlaneStorage? currentPlaneStorage;
+  WindowStorage? currentWindowStorage;
+  AnnotatedImages? annotatedImages;
 
-  Case({super.key, required this.case_no});
+  Case({super.key, required this.caseStorage});
 
   @override
   Widget build(BuildContext context) {
@@ -31,21 +35,24 @@ class Case extends HookWidget {
     ValueNotifier<Image?> current_image = useState(null);
     ValueNotifier<bool> showWindowPlaneTabBar = useState(true);
     ValueNotifier<bool> displayDescriptionDialog = useState(false);
+    ValueNotifier<PlaneStorage?> currentPlaneStorage = useState(null);
+    ValueNotifier<WindowStorage?> currentWindowStorage = useState(null);
 
     final SensitivityValue sensitivity_value = Provider.of<SensitivityValue>(context);
     final sensitivity = sensitivity_value.svalue;
 
     final statusbar_height = MediaQuery.of(context).viewPadding.top;
 
-    void onPlaneOrWindowChange(PlaneType selected_plane, WindowType selected_window) {
-      if (current_plane != selected_plane && current_window != selected_window) {
-        mri_case.value?.loadWindow(case_no, selected_plane, selected_window).then((_) {
+    void onPlaneOrWindowChange(PlaneStorage selectedPlaneStorage, WindowStorage selectedWindowStorage) {
+      if (currentPlaneStorage.value!.planeType != selectedPlaneStorage.planeType &&
+          currentWindowStorage.value!.windowType != selectedWindowStorage.windowType) {
+        mri_case.value?.loadWindow(selectedWindowStorage).then((_) {
           mri_case.value?.window.next().then((img) {
             current_image.value = img;
           });
         });
-        current_plane = selected_plane;
-        current_window = selected_window;
+        currentPlaneStorage.value = selectedPlaneStorage;
+        currentWindowStorage.value = selectedWindowStorage;
       }
     }
 
@@ -70,20 +77,27 @@ class Case extends HookWidget {
       }
     }
 
+    Future<void> loadAnnotatedImages(annotatedImageDirectory) async {
+      debugPrint("$annotatedImageDirectory");
+      annotatedImages = await AnnotatedImages.fromAnnotatedImageDirectory(annotatedImageDirectory);
+    }
+
     useEffect(() {
-      MRICase.fromCaseNumber(case_no).then((_case) {
+      debugPrint("${caseStorage.planes.length}");
+      MRICase.fromCaseDisplayDetails(caseStorage).then((_case) {
+        loadAnnotatedImages(caseStorage.annotatedImagesPath);
         mri_case.value = _case;
         mri_case.value?.window.next().then((img) {
           current_image.value = img;
-          current_window = mri_case.value?.current_window_type;
-          current_plane = mri_case.value?.current_plane_type;
+          currentPlaneStorage.value = mri_case.value?.currentPlaneStorage;
+          currentWindowStorage.value = mri_case.value?.currentWindowStorage;
         });
+        //  });
+        return () {
+          mri_case.value?.clean_all();
+        };
       });
-      return () {
-        mri_case.value?.clean_all();
-      };
     }, []);
-
     return Scaffold(
         backgroundColor: Colors.black,
         body: GestureDetector(
@@ -96,9 +110,7 @@ class Case extends HookWidget {
                     children: [
                       Center(child: current_image.value ?? const Text("Wait")),
                       showWindowPlaneTabBar.value
-                          ? WindowPlaneTabBar(
-                              possible_planes_and_windows: (mri_case.value?.possible_planes_and_windows)!,
-                              onPlaneOrWindowChange: onPlaneOrWindowChange)
+                          ? WindowPlaneTabBar(allPlaneStorage: caseStorage.planes.toList(), onPlaneOrWindowChange: onPlaneOrWindowChange)
                           : const SizedBox.shrink(),
                       Positioned(
                           top: statusbar_height + 8,
@@ -120,16 +132,103 @@ class Case extends HookWidget {
                           )),
                       DescriptionDialog(
                           display: displayDescriptionDialog.value,
-                          data: "[A_BW2021](alsjfd)",
-                          onTapLink: (a, b, c) {
-                            //
+                          data: caseStorage.description,
+                          onTapLink: (text, url, title) {
+                            if (url != null && annotatedImages != null) {
+                              AnnotatedImage? annotatedImage = annotatedImages!.getImage(url);
+                              debugPrint("$annotatedImage");
+                              if (annotatedImage != null) {
+                                current_image.value = annotatedImage.image;
+                              }
+                            }
                           })
                     ],
                   )
-                : const Text(
-                    "Loading right now",
-                    style: TextStyle(color: Colors.white),
+                : const Center(
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                    ),
                   )));
+  }
+}
+
+class AnnotatedImage {
+  Image image;
+
+  ImageStreamListener listener;
+
+  ImageStream? imageStream;
+
+  String path;
+
+  AnnotatedImage(this.image, this.listener, this.path);
+
+  static Future<AnnotatedImage> fromPath(String path) async {
+    File file = File(path);
+
+    var buf = await file.readAsBytes(); // Represents the buffer of image file
+    var image = Image.memory(buf, gaplessPlayback: true);
+    var listener = ImageStreamListener((image, synchronousCall) {});
+    final annotatedImage = AnnotatedImage(image, listener, path);
+    annotatedImage.resolve();
+    return annotatedImage;
+  }
+
+  /// Resolves the loaded image by adding a listener attached to it, it will
+  /// resolve the image and store in the memory
+  void resolve() {
+    imageStream = image.image.resolve(const ImageConfiguration());
+    imageStream?.completer?.addListener(listener);
+  }
+
+  /// Unloads from the memory by removing the listener attached to it,
+  /// it simply frees the resolved images from the memory
+  void unresolve() {
+    imageStream?.removeListener(listener);
+    imageStream = null;
+    image.image.evict().then((value) => {});
+  }
+}
+
+class AnnotatedImages {
+  List<AnnotatedImage> images;
+
+  AnnotatedImages(this.images);
+
+  static Future<AnnotatedImages> fromAnnotatedImageDirectory(String annotatedImageDirectory) async {
+    List<AnnotatedImage> images = List.empty(growable: true);
+
+    List<FileSystemEntity> images_paths = await Directory(annotatedImageDirectory).list().toList();
+
+    for (FileSystemEntity e in images_paths) {
+      var annotatedImage = await AnnotatedImage.fromPath(e.path);
+      images.add(annotatedImage);
+      annotatedImage.resolve();
+    }
+
+    return AnnotatedImages(images);
+  }
+
+  // Gives you the annotatedImage of the "identifier" of the image is in its path
+  AnnotatedImage? getImage(String identifier) {
+    for (AnnotatedImage annotatedImage in images) {
+      if (annotatedImage.path.contains(identifier)) {
+        return annotatedImage;
+      }
+    }
+  }
+}
+
+class ImageIdentifier {
+  PlaneType? plane_type;
+  WindowType? window_type;
+  int? image_index;
+
+  ImageIdentifier(String url) {
+    List<String> parts = url.split(' ');
+    plane_type = PlaneType.from(parts[0]);
+    window_type = WindowType.from(parts[1]);
+    image_index = int.parse(parts[2]);
   }
 }
 
@@ -158,38 +257,47 @@ class DescriptionDialog extends HookWidget {
 
 class WindowPlaneTabBar extends HookWidget {
   /// All the possible planes that can be selected
-  final HashMap<PlaneType, List<WindowType>> possible_planes_and_windows;
+  Map<PlaneStorage, List<WindowStorage>> possible_planes_and_windows = {};
 
   // All the current planes available, mapped to a tab bar widget
-  final current_planes = <PlaneType, Widget>{};
+  final current_planes = <PlaneStorage, Widget>{};
 
-  // TODO : Make sure it doesnt get called when we select already selected window and its plane
-  // Callback when Window or Plane is changed
-  final Function(PlaneType selected_plane, WindowType selected_window) onPlaneOrWindowChange;
+  final Function(PlaneStorage selected_plane, WindowStorage selected_window) onPlaneOrWindowChange;
 
-  WindowPlaneTabBar({super.key, required this.possible_planes_and_windows, required this.onPlaneOrWindowChange}) {
+  WindowPlaneTabBar({super.key, required List<PlaneStorage> allPlaneStorage, required this.onPlaneOrWindowChange}) {
+    possible_planes_and_windows = {};
+
+    allPlaneStorage.forEach((PlaneStorage planeStorage) {
+      List<WindowStorage> allWindowStorage = List.empty(growable: true);
+      planeStorage.windows.toList().forEach((WindowStorage windowStorage) {
+        allWindowStorage.add(windowStorage);
+      });
+
+      possible_planes_and_windows[planeStorage] = allWindowStorage;
+    });
+
     possible_planes_and_windows.forEach((key, _) {
       current_planes[key] = Padding(
           padding: const EdgeInsets.only(left: 8, right: 8),
-          child: Text(key.value.capitalizeFirstChar(), style: const TextStyle(fontSize: 16)));
+          child: Text(key.planeType.capitalizeFirstChar(), style: const TextStyle(fontSize: 16)));
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    ValueNotifier<Map<WindowType, Widget>> current_windows = useState({});
-    ValueNotifier<PlaneType> current_plane = useState(current_planes.keys.first);
-    ValueNotifier<WindowType?> current_window = useState(null);
+    ValueNotifier<Map<WindowStorage, Widget>> current_windows = useState({});
+    ValueNotifier<PlaneStorage> current_plane = useState(current_planes.keys.first);
+    ValueNotifier<WindowStorage?> current_window = useState(null);
 
-    void loadWindowsTabBar(PlaneType plane) {
+    void loadWindowsTabBar(PlaneStorage plane) {
       possible_planes_and_windows.forEach((_plane, _windows) {
-        if (_plane == plane) {
-          Map<WindowType, Widget> __windows = {};
+        if (_plane.planeType == plane.planeType) {
+          Map<WindowStorage, Widget> __windows = {};
           _windows.forEach((window) {
             __windows[window] = Padding(
                 padding: const EdgeInsets.only(left: 12, right: 12),
                 child: Text(
-                  window.value.capitalizeFirstChar(),
+                  window.windowType.capitalizeFirstChar(),
                   style: const TextStyle(
                     fontSize: 16,
                   ),

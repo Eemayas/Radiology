@@ -5,6 +5,9 @@ import 'dart:io';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:radiology/Pages/Home/home.dart';
+import 'package:radiology/db/objbox.dart';
+import 'package:radiology/utils.dart';
 import './window.dart';
 
 const BASE_DIR = "/storage/emulated/0/Android";
@@ -14,78 +17,37 @@ const BASE_DIR = "/storage/emulated/0/Android";
 ///
 class MRICase {
   /// All possible Planes and Windows within this Case
-  HashMap<PlaneType, List<WindowType>> possible_planes_and_windows;
+  List<PlaneStorage> allPlaneStorage;
 
   /// Represents the current Plane loaded
-  PlaneType current_plane_type;
+  PlaneStorage currentPlaneStorage;
 
   /// Represents the current Window loaded
-  WindowType current_window_type;
+  WindowStorage currentWindowStorage;
 
   /// Current Window being loaded
   Window window;
 
-  MRICase(this.possible_planes_and_windows, this.current_plane_type, this.current_window_type, this.window);
+  MRICase(this.allPlaneStorage, this.currentPlaneStorage, this.currentWindowStorage, this.window);
 
-  static Future<MRICase> fromCaseNumber(int case_no) async {
-    HashMap<PlaneType, List<WindowType>> possible_cases = await getAllPossibleCases(case_no);
+  //static Future<MRICase> fromCaseNumber(int case_no) async {
+  static Future<MRICase?> fromCaseDisplayDetails(CaseStorage caseStorage) async {
+    List<PlaneStorage> allPlaneStorage = caseStorage.planes.toList();
+    PlaneStorage currentPlaneStorage = allPlaneStorage.first;
+    WindowStorage currentWindowStorage = currentPlaneStorage.windows.first;
 
-    // Get the first PlaneType and it's WindowType from possible_cases
-    PlaneType initial_plane = possible_cases.keys.first;
-    WindowType initial_window = possible_cases.values.first.first;
+    Window window = await Window.fromImagesDirectory(currentWindowStorage.imagesPath);
 
-    String dir = "$BASE_DIR/$case_no/${initial_plane.value}/${initial_window.value}";
-    Window window = await Window.fromImagesDirectory(dir);
-    return MRICase(possible_cases, initial_plane, initial_window, window);
+    return MRICase(allPlaneStorage, currentPlaneStorage, currentWindowStorage, window);
   }
 
-  Future loadWindow(int case_no, PlaneType plane_type, WindowType window_type) async {
-    current_plane_type = plane_type;
-    current_window_type = window_type;
+  Future loadWindow(WindowStorage windowStorage) async {
     window.clean_all();
-    window = await Window.fromImagesDirectory("$BASE_DIR/$case_no/${current_plane_type.value}/${current_window_type.value}");
-  }
-
-  /// Gets all possible Planes and Windows from the given case no
-  static Future<HashMap<PlaneType, List<WindowType>>> getAllPossibleCases(int case_no) async {
-    HashMap<PlaneType, List<WindowType>> possible_cases = HashMap<PlaneType, List<WindowType>>();
-
-    Directory base_dir = Directory("$BASE_DIR/$case_no");
-
-    // Gets all the folders within the case number
-    List<String> folders = (await base_dir.list().toList()).map((f) => f.path.split("/").last).toList();
-
-    for (String folder in folders) {
-      if (folder == PlaneType.axial.value) {
-        possible_cases[PlaneType.axial] = List.empty(growable: true);
-      } else if (folder == PlaneType.sagittal.value) {
-        possible_cases[PlaneType.sagittal] = List.empty(growable: true);
-      } else if (folder == PlaneType.coronal.value) {
-        possible_cases[PlaneType.coronal] = List.empty(growable: true);
-      }
-    }
-
-    for (PlaneType key in possible_cases.keys) {
-      Directory base_dir = Directory("$BASE_DIR/$case_no/${key.value}");
-
-      List<String> folders = (await base_dir.list().toList()).map((f) => f.path.split("/").last).toList();
-      for (String folder in folders) {
-        if (folder == WindowType.bone.value) {
-          possible_cases[key]?.add(WindowType.bone);
-        } else if (folder == WindowType.brain.value) {
-          possible_cases[key]?.add(WindowType.brain);
-        } else if (folder == WindowType.lung.value) {
-          possible_cases[key]?.add(WindowType.lung);
-        } else if (folder == WindowType.soft_tissue.value) {
-          possible_cases[key]?.add(WindowType.soft_tissue);
-        }
-      }
-    }
-    return possible_cases;
+    window = await Window.fromImagesDirectory(windowStorage.imagesPath);
   }
 
   Future<void> clean_all() async {
-    window.clean_all();
+    await window.clean_all();
   }
 }
 
@@ -98,6 +60,18 @@ enum PlaneType {
   final String value;
 
   const PlaneType(this.value);
+
+  static PlaneType? from(String data) {
+    switch (data) {
+      case "axial":
+        return PlaneType.axial;
+      case "sagittal":
+        return PlaneType.sagittal;
+      case "coronal":
+        return PlaneType.coronal;
+    }
+    return null;
+  }
 }
 
 class CaseDisplay extends StatefulWidget {

@@ -1,0 +1,113 @@
+{
+  "_note1": "KEEP THIS FILE! Check it into a version control system (VCS) like git.",
+  "_note2": "ObjectBox manages crucial IDs for your object model. See docs for details.",
+  "_note3": "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs.",
+  "entities": [
+    {
+      "id": "1:3161485262557897476",
+      "lastPropertyId": "6:6096443964003695091",
+      "name": "CaseStorage",
+      "properties": [
+        {
+          "id": "2:8982927949143462391",
+          "name": "caseId",
+          "type": 6
+        },
+        {
+          "id": "3:6185172823646127305",
+          "name": "caseTitle",
+          "type": 9
+        },
+        {
+          "id": "4:4461928613302633586",
+          "name": "description",
+          "type": 9
+        },
+        {
+          "id": "5:199592008620657119",
+          "name": "annotatedImagesPath",
+          "type": 9
+        },
+        {
+          "id": "6:6096443964003695091",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        }
+      ],
+      "relations": [
+        {
+          "id": "4:88302784194330544",
+          "name": "planes",
+          "targetId": "2:640701132895911051"
+        }
+      ]
+    },
+    {
+      "id": "2:640701132895911051",
+      "lastPropertyId": "2:1393743004743026692",
+      "name": "PlaneStorage",
+      "properties": [
+        {
+          "id": "1:1097818893202289967",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:1393743004743026692",
+          "name": "planeType",
+          "type": 9
+        }
+      ],
+      "relations": [
+        {
+          "id": "3:5897756999727749539",
+          "name": "windows",
+          "targetId": "3:6161986897395975350"
+        }
+      ]
+    },
+    {
+      "id": "3:6161986897395975350",
+      "lastPropertyId": "4:2869994128125789001",
+      "name": "WindowStorage",
+      "properties": [
+        {
+          "id": "1:5764473188133717405",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "3:2217474279285972583",
+          "name": "windowType",
+          "type": 9
+        },
+        {
+          "id": "4:2869994128125789001",
+          "name": "imagesPath",
+          "type": 9
+        }
+      ],
+      "relations": []
+    }
+  ],
+  "lastEntityId": "3:6161986897395975350",
+  "lastIndexId": "0:0",
+  "lastRelationId": "4:88302784194330544",
+  "lastSequenceId": "0:0",
+  "modelVersion": 5,
+  "modelVersionParserMinimum": 5,
+  "retiredEntityUids": [],
+  "retiredIndexUids": [],
+  "retiredPropertyUids": [
+    1832558261113410637,
+    5349300536274241000
+  ],
+  "retiredRelationUids": [
+    379523746237007951,
+    2330134373173620508
+  ],
+  "version": 1
+}

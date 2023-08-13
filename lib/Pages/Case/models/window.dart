@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import '../../../utils.dart';
 import 'dart:io';
 
-const int IMG_BUF_SIZE = 40;
-const int RESOLVE_BUF_SIZE = 20;
+const int IMG_BUF_SIZE = 10;
+const int RESOLVE_BUF_SIZE = 10;
 
 enum WindowType {
   soft_tissue("soft_tissue"),
@@ -15,6 +15,20 @@ enum WindowType {
 
   final String value;
   const WindowType(this.value);
+
+  static WindowType? from(String data) {
+    switch (data) {
+      case "soft_tissue":
+        return WindowType.soft_tissue;
+      case "lung":
+        return WindowType.lung;
+      case "brain":
+        return WindowType.brain;
+      case "bone":
+        return WindowType.bone;
+    }
+    return null;
+  }
 }
 
 class Window {
@@ -59,13 +73,15 @@ class Window {
     for (var i = 0; i < IMG_BUF_SIZE; i++) {
       var fut = Future(() async {
         var mri_image = await MRIImage.fromPathAndIndex(paths[i], i);
-        if (i < RESOLVE_BUF_SIZE) {
+        int lower_triggering_index = (IMG_BUF_SIZE / 2).truncate();
+        if (i <= lower_triggering_index) {
           mri_image.resolve();
         }
         return mri_image;
       });
       images.add(fut);
     }
+
     return Window(images, paths);
   }
 
@@ -172,7 +188,7 @@ class Window {
     }
   }
 
-  void clean_all() async {
+  Future<void> clean_all() async {
     for (int i = lower_img_buf_index; i <= upper_img_buf_index; i++) {
       (await images[i]).unresolve();
     }

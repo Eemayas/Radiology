@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
 class SwitchScreen extends StatefulWidget {
-  const SwitchScreen({super.key});
-
   @override
   SwitchClass createState() => new SwitchClass();
 }
