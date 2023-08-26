@@ -1,4 +1,4 @@
-// ignore_for_file: non_constant_identifier_names, no_leading_underscores_for_local_identifiers
+// ignore_for_file: non_constant_identifier_names, no_leading_underscores_for_local_identifiers, prefer_typing_uninitialized_variables
 // ignore_for_file: constant_identifier_names
 
 import 'package:flutter/material.dart';
@@ -69,7 +69,9 @@ void main() async {
   await themeProvider.loadSavedPreferences();
   var sensitivityValue = await SensitivityValue.fromSharedPref();
   var resolveValue = await ResolveValue.fromSharedPref();
-  objectbox.Store store = objectbox.Store(getObjectBoxModel(), directory: join((await getApplicationDocumentsDirectory()).path, "objectbox"));
+  objectbox.Store store = objectbox.Store(getObjectBoxModel(),
+      directory:
+          join((await getApplicationDocumentsDirectory()).path, "objectbox"));
   runApp(MultiProvider(
     providers: [
       ChangeNotifierProvider(create: (_) => themeProvider),
@@ -82,7 +84,7 @@ void main() async {
       Provider(create: (_) => store),
     ],
     child: Consumer<ThemeProvider>(
-      child: ThemeOptionsPage(),
+      child: const ThemeOptionsPage(),
       builder: (c, themeProvider, child) {
         return MaterialPageApp(
           themeProvider: themeProvider,
@@ -115,12 +117,14 @@ class MaterialPageApp extends HookWidget {
       themeMode: themeProvider.selectedThemeMode,
       theme: ThemeData(
         brightness: Brightness.light,
-        primarySwatch: AppColors.getMaterialColorFromColor(themeProvider.selectedPrimaryColor),
+        primarySwatch: AppColors.getMaterialColorFromColor(
+            themeProvider.selectedPrimaryColor),
         primaryColor: themeProvider.selectedPrimaryColor,
       ),
       darkTheme: ThemeData(
         brightness: Brightness.dark,
-        primarySwatch: AppColors.getMaterialColorFromColor(themeProvider.selectedPrimaryColor),
+        primarySwatch: AppColors.getMaterialColorFromColor(
+            themeProvider.selectedPrimaryColor),
         primaryColor: themeProvider.selectedPrimaryColor,
       ),
     );

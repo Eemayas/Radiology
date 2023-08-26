@@ -30,17 +30,17 @@ class ThemeProvider with ChangeNotifier {
     setSelectedPrimaryColor(savedPrimaryColor);
   }
 
-  setSelectedThemeMode(ThemeMode _themeMode) async {
-    selectedThemeMode = _themeMode;
+  setSelectedThemeMode(ThemeMode themeMode) async {
+    selectedThemeMode = themeMode;
     notifyListeners();
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setInt('themeMode', _themeMode.index);
+    prefs.setInt('themeMode', themeMode.index);
   }
 
-  setSelectedPrimaryColor(Color _color) async {
-    selectedPrimaryColor = _color;
+  setSelectedPrimaryColor(Color color) async {
+    selectedPrimaryColor = color;
     notifyListeners();
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setInt('primaryColor', _color.value);
+    prefs.setInt('primaryColor', color.value);
   }
 }

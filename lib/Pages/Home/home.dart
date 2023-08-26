@@ -74,7 +74,8 @@ class CaseDisplayDetails {
       int caseId = response_case["case_id"];
       String caseTitle = response_case["case_title"];
       String description = response_case["description"];
-      String annotated_image_zip_file_url = response_case["annotated_image_zip_file"];
+      String annotated_image_zip_file_url =
+          response_case["annotated_image_zip_file"];
 
       online_cases.add(CaseDisplayDetails(
         caseId: caseId,
@@ -93,7 +94,8 @@ class CaseDisplayDetails {
 
       for (CaseDisplayDetails online_case in online_cases) {
         if (online_case.caseId == caseId) {
-          online_case.planeDisplayDetails.add(PlaneDisplayDetail(planeId, planeType, List.empty(growable: true)));
+          online_case.planeDisplayDetails.add(PlaneDisplayDetail(
+              planeId, planeType, List.empty(growable: true)));
         }
       }
     }
@@ -106,9 +108,11 @@ class CaseDisplayDetails {
       int planeId = response_window["Plane"];
 
       for (CaseDisplayDetails online_case in online_cases) {
-        for (PlaneDisplayDetail planeDisplayDetail in online_case.planeDisplayDetails) {
+        for (PlaneDisplayDetail planeDisplayDetail
+            in online_case.planeDisplayDetails) {
           if (planeDisplayDetail.planeId == planeId) {
-            planeDisplayDetail.windowDisplayDetails.add(WindowDisplayDetail(windowId, windowType, imagesZipFileLink));
+            planeDisplayDetail.windowDisplayDetails.add(
+                WindowDisplayDetail(windowId, windowType, imagesZipFileLink));
           }
         }
       }
@@ -152,17 +156,21 @@ class Home extends HookWidget {
   @override
   Widget build(BuildContext context) {
     // Using the useState hook to manage a counter
-    final all_online_and_downloaded_cases = useState(List<CaseDisplayDetails>.empty(growable: true));
+    final all_online_and_downloaded_cases =
+        useState(List<CaseDisplayDetails>.empty(growable: true));
 
     /// Get the details of downloaded casesv
     Future<void> getOnlineCases() async {
       final all_online_cases = await CaseDisplayDetails.fromOnlineCases();
 
-      final currentAllOnlineAndDownloadedCases = [...all_online_and_downloaded_cases.value]; // Create a copy
+      final currentAllOnlineAndDownloadedCases = [
+        ...all_online_and_downloaded_cases.value
+      ]; // Create a copy
 
       for (CaseDisplayDetails online_case in all_online_cases) {
         bool alreadyAdded = false;
-        for (CaseDisplayDetails online_and_downloaded_case in currentAllOnlineAndDownloadedCases) {
+        for (CaseDisplayDetails online_and_downloaded_case
+            in currentAllOnlineAndDownloadedCases) {
           if (online_and_downloaded_case.caseId == online_case.caseId) {
             alreadyAdded = true;
             break;
@@ -175,7 +183,8 @@ class Home extends HookWidget {
       }
 
       debugPrint("WAS ADDDDDDDDDEDDDdd-2");
-      all_online_and_downloaded_cases.value = currentAllOnlineAndDownloadedCases; // Update the state
+      all_online_and_downloaded_cases.value =
+          currentAllOnlineAndDownloadedCases; // Update the state
 
 //      final all_online_cases = await CaseDisplayDetails.fromOnlineCases();
 //
@@ -201,80 +210,106 @@ class Home extends HookWidget {
     Future<int?> downloadCase(int caseId) async {
       Directory appDirectory = await getApplicationDocumentsDirectory();
 
-      var current_all_online_and_downloaded_cases = all_online_and_downloaded_cases.value;
+      var current_all_online_and_downloaded_cases =
+          all_online_and_downloaded_cases.value;
 
-      int indexOfItemToUpdate = current_all_online_and_downloaded_cases.indexWhere((item) => item.caseId == caseId);
-      current_all_online_and_downloaded_cases[indexOfItemToUpdate].downloadStatus = DownloadStatus.downloading;
+      int indexOfItemToUpdate = current_all_online_and_downloaded_cases
+          .indexWhere((item) => item.caseId == caseId);
+      current_all_online_and_downloaded_cases[indexOfItemToUpdate]
+          .downloadStatus = DownloadStatus.downloading;
 
-      current_all_online_and_downloaded_cases = [...current_all_online_and_downloaded_cases];
-      all_online_and_downloaded_cases.value = current_all_online_and_downloaded_cases;
+      current_all_online_and_downloaded_cases = [
+        ...current_all_online_and_downloaded_cases
+      ];
+      all_online_and_downloaded_cases.value =
+          current_all_online_and_downloaded_cases;
 
-      var currentCaseDisplay = current_all_online_and_downloaded_cases[indexOfItemToUpdate];
+      var currentCaseDisplay =
+          current_all_online_and_downloaded_cases[indexOfItemToUpdate];
 
-      Directory annotatedImageDirectory = Directory(join(appDirectory.path, "$caseId", "annotatedImage"));
+      Directory annotatedImageDirectory =
+          Directory(join(appDirectory.path, "$caseId", "annotatedImage"));
       await annotatedImageDirectory.create(recursive: true);
 
-      debugPrint("${currentCaseDisplay.annotated_image_zip_file_url}");
+      debugPrint(currentCaseDisplay.annotated_image_zip_file_url);
       // Download annoated image zip file
-      List<int> zipData = await downloadFile(currentCaseDisplay.annotated_image_zip_file_url);
-      File zipFile = await File(join(appDirectory.path, "annotatedImage.zip")).create();
+      List<int> zipData =
+          await downloadFile(currentCaseDisplay.annotated_image_zip_file_url);
+      File zipFile =
+          await File(join(appDirectory.path, "annotatedImage.zip")).create();
       await zipFile.writeAsBytes(zipData);
 
       try {
-        await ZipFile.extractToDirectory(zipFile: zipFile, destinationDir: annotatedImageDirectory);
+        await ZipFile.extractToDirectory(
+            zipFile: zipFile, destinationDir: annotatedImageDirectory);
         //await zipFile.delete();
       } catch (e) {
         debugPrint("Error in decompression");
       }
 
       // Store through BoxStorage
-      CaseStorage caseData =
-          CaseStorage(caseId, currentCaseDisplay.caseTitle, currentCaseDisplay.description, annotatedImageDirectory.path);
+      CaseStorage caseData = CaseStorage(caseId, currentCaseDisplay.caseTitle,
+          currentCaseDisplay.description, annotatedImageDirectory.path);
 
-      for (PlaneDisplayDetail planeDisplayDetail in currentCaseDisplay.planeDisplayDetails) {
+      for (PlaneDisplayDetail planeDisplayDetail
+          in currentCaseDisplay.planeDisplayDetails) {
         PlaneStorage planeStorage = PlaneStorage(planeDisplayDetail.planeType);
-        Directory planeDirectory = Directory(join(appDirectory.path, "$caseId", planeDisplayDetail.planeType));
+        Directory planeDirectory = Directory(
+            join(appDirectory.path, "$caseId", planeDisplayDetail.planeType));
         await planeDirectory.create(recursive: true);
 
-        for (WindowDisplayDetail windowDisplayDetail in planeDisplayDetail.windowDisplayDetails) {
-          Directory windowDirectory = Directory(join(planeDirectory.path, windowDisplayDetail.windowType));
+        for (WindowDisplayDetail windowDisplayDetail
+            in planeDisplayDetail.windowDisplayDetails) {
+          Directory windowDirectory = Directory(
+              join(planeDirectory.path, windowDisplayDetail.windowType));
           await windowDirectory.create(recursive: true);
 
           String imagesZipFileLink = windowDisplayDetail.imagesZipFileLink;
 
           List<int> zipData = await downloadFile(imagesZipFileLink);
-          File zipFile = await File(join(appDirectory.path, "${planeStorage.id}.zip")).create();
+          File zipFile =
+              await File(join(appDirectory.path, "${planeStorage.id}.zip"))
+                  .create();
           await zipFile.writeAsBytes(zipData);
 
           try {
-            await ZipFile.extractToDirectory(zipFile: zipFile, destinationDir: windowDirectory);
+            await ZipFile.extractToDirectory(
+                zipFile: zipFile, destinationDir: windowDirectory);
             //await zipFile.delete();
             debugPrint("${windowDirectory.listSync().length}");
           } catch (e) {
             debugPrint("Error in decompression");
           }
 
-          WindowStorage windowStorage = WindowStorage(windowDisplayDetail.windowType, windowDirectory.path);
+          WindowStorage windowStorage = WindowStorage(
+              windowDisplayDetail.windowType, windowDirectory.path);
           planeStorage.windows.add(windowStorage);
         }
         caseData.planes.add(planeStorage);
       }
 
-      current_all_online_and_downloaded_cases[indexOfItemToUpdate].downloadStatus = DownloadStatus.downloaded;
+      current_all_online_and_downloaded_cases[indexOfItemToUpdate]
+          .downloadStatus = DownloadStatus.downloaded;
 
-      current_all_online_and_downloaded_cases = [...current_all_online_and_downloaded_cases];
-      all_online_and_downloaded_cases.value = current_all_online_and_downloaded_cases;
+      current_all_online_and_downloaded_cases = [
+        ...current_all_online_and_downloaded_cases
+      ];
+      all_online_and_downloaded_cases.value =
+          current_all_online_and_downloaded_cases;
 
       objectbox.Store store = context.read<objectbox.Store>();
       store.box<CaseStorage>().put(caseData);
+      return null;
     }
 
     /// Get the details of downloaded cases
     void getDownloadedCases() {
       objectbox.Store store = context.read<objectbox.Store>();
-      List<CaseStorage> all_downloaded_cases = store.box<CaseStorage>().getAll();
+      List<CaseStorage> all_downloaded_cases =
+          store.box<CaseStorage>().getAll();
 
-      var current_all_online_and_downloaded_cases = all_online_and_downloaded_cases.value;
+      var current_all_online_and_downloaded_cases =
+          all_online_and_downloaded_cases.value;
       for (CaseStorage downloaded_case in all_downloaded_cases) {
         current_all_online_and_downloaded_cases.add(CaseDisplayDetails(
             description: downloaded_case.description,
@@ -285,7 +320,9 @@ class Home extends HookWidget {
             annotated_image_zip_file_url: ""));
       }
 
-      all_online_and_downloaded_cases.value = [...current_all_online_and_downloaded_cases];
+      all_online_and_downloaded_cases.value = [
+        ...current_all_online_and_downloaded_cases
+      ];
     }
 
     debugPrint("OUTSIDE BRO");
@@ -309,16 +346,24 @@ class Home extends HookWidget {
               )
             : ListView(
                 children: <Widget>[
-                  for (int i = 0; i < all_online_and_downloaded_cases.value.length; i++)
+                  for (int i = 0;
+                      i < all_online_and_downloaded_cases.value.length;
+                      i++)
                     Column(
                       children: [
                         CaseListItem(
-                          caseId: all_online_and_downloaded_cases.value[i].caseId,
-                          caseTitle: all_online_and_downloaded_cases.value[i].caseTitle,
+                          caseId:
+                              all_online_and_downloaded_cases.value[i].caseId,
+                          caseTitle: all_online_and_downloaded_cases
+                              .value[i].caseTitle,
                           onTap: (caseId) {
                             debugPrint("aldfjasj");
-                            objectbox.Store store = context.read<objectbox.Store>();
-                            Query<CaseStorage> query = store.box<CaseStorage>().query(CaseStorage_.caseId.equals(caseId)).build();
+                            objectbox.Store store =
+                                context.read<objectbox.Store>();
+                            Query<CaseStorage> query = store
+                                .box<CaseStorage>()
+                                .query(CaseStorage_.caseId.equals(caseId))
+                                .build();
 
                             List<CaseStorage> data = query.find();
                             if (data.isNotEmpty) {
@@ -328,7 +373,8 @@ class Home extends HookWidget {
                           onDownloadTap: (caseId) {
                             downloadCase(caseId);
                           },
-                          downloadStatus: all_online_and_downloaded_cases.value[i].downloadStatus,
+                          downloadStatus: all_online_and_downloaded_cases
+                              .value[i].downloadStatus,
                         ),
                         Divider(
                           thickness: 1,
@@ -354,7 +400,12 @@ class CaseListItem extends HookWidget {
   void Function(int)? onDownloadTap;
   DownloadStatus downloadStatus;
 
-  CaseListItem({required this.caseId, required this.caseTitle, required this.onTap, required this.downloadStatus, this.onDownloadTap});
+  CaseListItem(
+      {required this.caseId,
+      required this.caseTitle,
+      required this.onTap,
+      required this.downloadStatus,
+      this.onDownloadTap});
 
   @override
   Widget build(BuildContext context) {
@@ -381,9 +432,28 @@ class CaseListItem extends HookWidget {
     return ListTile(
       enabled: downloadStatus == DownloadStatus.downloaded,
       onTap: () => onTap(caseId),
-      title: Text(
-        "Case no ${caseId}",
-        style: TextStyle(fontWeight: FontWeight.w500),
+      title: Row(
+        children: [
+          Text(
+            "Case no ${caseId}",
+            style: TextStyle(fontWeight: FontWeight.w500),
+          ),
+          SizedBox(
+            width: 4,
+          ),
+          Container(
+            decoration: BoxDecoration(
+                border: Border.all(), borderRadius: BorderRadius.circular(4)),
+            // height: 10,
+            child: Padding(
+              padding: const EdgeInsets.all(3.0),
+              child: Text(
+                "Tag 1",
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
+            ),
+          ),
+        ],
       ),
       trailing: trailingWidget,
       subtitle: Text(caseTitle),

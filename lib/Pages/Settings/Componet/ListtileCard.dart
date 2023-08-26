@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class ListTileCard extends StatelessWidget {
   ListTileCard(
-      {required this.title, required this.OnTap, required this.trailing});
+      {super.key, required this.title, required this.OnTap, required this.trailing});
   late String title;
   late Function() OnTap;
   final String trailing;
@@ -16,7 +16,7 @@ class ListTileCard extends StatelessWidget {
           title: Text(title),
           onTap: OnTap,
         ),
-        Divider(
+        const Divider(
           thickness: 2,
         ),
       ],

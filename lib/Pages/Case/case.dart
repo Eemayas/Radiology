@@ -1,12 +1,10 @@
 // ignore_for_file: non_constant_identifier_names, no_leading_underscores_for_local_identifiers, constant_identifier_names, must_be_immutable
-import 'dart:collection';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:material_segmented_control/material_segmented_control.dart';
 import 'package:provider/provider.dart';
-import 'package:radiology/Pages/Home/home.dart';
 import 'package:radiology/Pages/Settings/Componet/Provider/value.dart';
 import 'package:radiology/db/objbox.dart';
 import '../Case/models/mri_case.dart';
@@ -97,6 +95,7 @@ class Case extends HookWidget {
           mri_case.value?.clean_all();
         };
       });
+      return null;
     }, []);
     return Scaffold(
         backgroundColor: Colors.black,
@@ -216,6 +215,7 @@ class AnnotatedImages {
         return annotatedImage;
       }
     }
+    return null;
   }
 }
 
@@ -237,7 +237,7 @@ class DescriptionDialog extends HookWidget {
   String data;
   Function(String, String?, String) onTapLink;
 
-  DescriptionDialog({this.display = true, required this.data, required this.onTapLink});
+  DescriptionDialog({super.key, this.display = true, required this.data, required this.onTapLink});
 
   @override
   Widget build(BuildContext context) {
@@ -251,7 +251,7 @@ class DescriptionDialog extends HookWidget {
               onTapLink: onTapLink,
             )),
           )
-        : SizedBox.shrink();
+        : const SizedBox.shrink();
   }
 }
 
@@ -267,14 +267,14 @@ class WindowPlaneTabBar extends HookWidget {
   WindowPlaneTabBar({super.key, required List<PlaneStorage> allPlaneStorage, required this.onPlaneOrWindowChange}) {
     possible_planes_and_windows = {};
 
-    allPlaneStorage.forEach((PlaneStorage planeStorage) {
+    for (var planeStorage in allPlaneStorage) {
       List<WindowStorage> allWindowStorage = List.empty(growable: true);
       planeStorage.windows.toList().forEach((WindowStorage windowStorage) {
         allWindowStorage.add(windowStorage);
       });
 
       possible_planes_and_windows[planeStorage] = allWindowStorage;
-    });
+    }
 
     possible_planes_and_windows.forEach((key, _) {
       current_planes[key] = Padding(
@@ -293,7 +293,7 @@ class WindowPlaneTabBar extends HookWidget {
       possible_planes_and_windows.forEach((_plane, _windows) {
         if (_plane.planeType == plane.planeType) {
           Map<WindowStorage, Widget> __windows = {};
-          _windows.forEach((window) {
+          for (var window in _windows) {
             __windows[window] = Padding(
                 padding: const EdgeInsets.only(left: 12, right: 12),
                 child: Text(
@@ -302,7 +302,7 @@ class WindowPlaneTabBar extends HookWidget {
                     fontSize: 16,
                   ),
                 ));
-          });
+          }
           current_windows.value = __windows;
           current_window.value = __windows.keys.first;
         }
@@ -320,7 +320,7 @@ class WindowPlaneTabBar extends HookWidget {
 
     return Positioned(
         bottom: 50,
-        child: (current_plane.value != null && current_window.value != null)
+        child: (current_window.value != null)
             ? Column(
                 children: [
                   MaterialSegmentedControl(

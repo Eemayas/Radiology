@@ -1,13 +1,8 @@
 // ignore_for_file: non_constant_identifier_names
 
-import 'dart:collection';
-import 'dart:io';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter/src/widgets/framework.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:radiology/Pages/Home/home.dart';
 import 'package:radiology/db/objbox.dart';
-import 'package:radiology/utils.dart';
 import './window.dart';
 
 const BASE_DIR = "/storage/emulated/0/Android";

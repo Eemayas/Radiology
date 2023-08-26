@@ -3,7 +3,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:radiology/Pages/Theme/theme_options_page.dart';
-import '../Drawer/drawer.dart';
 import 'Componet/ListtileCard.dart';
 import 'Componet/Provider/value.dart';
 import 'Componet/slider/Sensitivityslider.dart';
@@ -27,7 +26,7 @@ class Settings extends StatelessWidget {
                 trailing: "",
                 OnTap: () => Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => ThemeOptionsPage()),
+                  MaterialPageRoute(builder: (context) => const ThemeOptionsPage()),
                 ),
                 title: "Select Theme",
               ),
@@ -43,8 +42,8 @@ class Settings extends StatelessWidget {
                                 color: Colors.white,
                                 height: 150.0,
                                 width: MediaQuery.of(context).size.width * 0.7,
-                                child: Padding(
-                                  padding: const EdgeInsets.only(top: 20.0),
+                                child: const Padding(
+                                  padding: EdgeInsets.only(top: 20.0),
                                   child: Column(
                                     children: [
                                       Text(
@@ -77,8 +76,8 @@ class Settings extends StatelessWidget {
                                 color: Colors.white,
                                 height: 150.0,
                                 width: MediaQuery.of(context).size.width * 0.7,
-                                child: Padding(
-                                  padding: const EdgeInsets.only(top: 20.0),
+                                child: const Padding(
+                                  padding: EdgeInsets.only(top: 20.0),
                                   child: Column(
                                     children: [
                                       Text(
@@ -111,7 +110,7 @@ class Settings extends StatelessWidget {
                                 color: Colors.white,
                                 height: 150.0,
                                 width: MediaQuery.of(context).size.width * 0.7,
-                                child: Padding(
+                                child: const Padding(
                                   padding: EdgeInsets.only(top: 20.0),
                                   child: Column(
                                     children: [

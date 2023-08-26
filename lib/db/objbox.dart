@@ -1,6 +1,4 @@
 import 'package:objectbox/objectbox.dart';
-import 'package:radiology/Pages/Case/models/plane.dart';
-import 'package:radiology/Pages/Case/models/window.dart';
 
 @Entity()
 class CaseStorage {

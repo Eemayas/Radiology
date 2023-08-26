@@ -15,10 +15,11 @@ class Drawerr extends StatelessWidget {
           decoration: BoxDecoration(
             color: Theme.of(context).primaryColor,
           ),
+          // TODO: ADd image
           child: const Text('Drawer Header'),
         ),
         ListTile(
-          leading: Icon(
+          leading: const Icon(
             Icons.home,
           ),
           title: const Text('Home'),
@@ -27,24 +28,24 @@ class Drawerr extends StatelessWidget {
           },
         ),
         ListTile(
-          leading: Icon(
+          leading: const Icon(
             Icons.menu_book_sharp,
           ),
-          trailing: SwitchScreen(),
+          trailing: const SwitchScreen(),
           title: const Text('See Solutions'),
           onTap: () {
             Navigator.pop(context);
           },
         ),
         ListTile(
-          leading: Icon(
+          leading: const Icon(
             Icons.settings,
           ),
           title: const Text("Settings"),
           onTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => Settings()),
+              MaterialPageRoute(builder: (context) => const Settings()),
             );
           },
         ),
